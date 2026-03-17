@@ -1,27 +1,22 @@
+// rotas do app, definidas aqui no layout para serem usadas em todas as telas
 import { Stack } from 'expo-router';
 
 export default function RootLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: {
-          backgroundColor: '#2D5A27',
-        },
-        headerTintColor: '#fff',
-        headerTitleAlign: 'center',
-        headerShadowVisible: false,
+        
+        headerShown: false, 
+        contentStyle: { backgroundColor: '#fff' },
       }}>
-      {/* IMPORTANTE: Remova a linha que tinha name="(tabs)" 
-        Agora as telas são listadas diretamente pelo nome do arquivo
-      */}
-      <Stack.Screen name="index" options={{ title: 'Meu Jardim' }} />
-      <Stack.Screen name="Login" options={{ title: 'Login' }} />
-      <Stack.Screen name="Alertas" options={{ title: 'Alertas' }} />
-      <Stack.Screen name="Relatorio" options={{ title: 'Relatório' }} />
-      <Stack.Screen name="Config" options={{ title: 'Configurações' }} />
-      <Stack.Screen name="Cadastrar" options={{ title: 'Nova Planta' }} />
-      <Stack.Screen name="Analise" options={{ title: 'Análise' }} />
-      <Stack.Screen name="Usuario" options={{ title: 'Usuário' }} />
+      <Stack.Screen name="index" />
+      <Stack.Screen name="Login" />
+      <Stack.Screen name="Alertas" />
+      <Stack.Screen name="Relatorio" />
+      <Stack.Screen name="Config" />
+      <Stack.Screen name="Cadastrar" />
+      <Stack.Screen name="Analise" />
+      <Stack.Screen name="Usuario" />
     </Stack>
   );
-}   
+}
