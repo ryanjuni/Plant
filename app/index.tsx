@@ -1,112 +1,104 @@
-// responsável: Ryan junio - tela principal do app.
-
-import React, { Suspense, useRef, useState, useEffect } from 'react';
+import React, { Suspense, useRef, useState, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
 import { Canvas, useFrame } from '@react-three/fiber/native';
-import { useGLTF, ContactShadows, OrbitControls } from '@react-three/drei/native';
-import { useAssets } from 'expo-asset';
+import { useGLTF, OrbitControls } from '@react-three/drei/native';
+import { StatusBar } from 'expo-status-bar';
 import * as THREE from 'three';
 
-// Componente da Planta 3D
-function ModeloPlanta({ onLoaded }: { onLoaded: () => void }) {
-  const [assets] = useAssets([require('../assets/tropical_plant_2.glb')]);
-  const gltf = assets ? useGLTF(assets[0].uri) : null;
+const modelPath = require('../assets/tropical_plant_2.glb');
+
+function ModeloPlanta({ setPronto }: { setPronto: (val: boolean) => void }) {
+  const { scene } = useGLTF(modelPath) as any;
   const plantRef = useRef<THREE.Group>(null);
 
-  useEffect(() => {
-    if (gltf) onLoaded();
-  }, [gltf]);
+  const objetoFinal = useMemo(() => {
+    if (!scene) return null;
+    const clone = scene.clone();
+    clone.traverse((child: any) => {
+      if (child.isMesh) {
+        if (child.name.toLowerCase().includes('plane') || child.name.toLowerCase().includes('floor')) {
+          child.visible = false;
+        }
+        if (child.material) {
+          child.material.transparent = false;
+          child.castShadow = false;
+          child.receiveShadow = false;
+        }
+      }
+    });
+    return clone;
+  }, [scene]);
 
-  useFrame((state, delta) => {
+  useEffect(() => {
+    if (objetoFinal) setPronto(true);
+  }, [objetoFinal, setPronto]);
+
+  useFrame((_, delta) => {
     if (plantRef.current) {
-      plantRef.current.rotation.y += 0.3 * delta;
+      plantRef.current.rotation.y += 0.15 * delta;
     }
   });
 
-  if (!gltf) return null;
+  if (!objetoFinal) return null;
 
-  return (
-    <primitive 
-      ref={plantRef} 
-      object={gltf.scene} 
-      scale={2.1} // Reduzi levemente a escala para não cortar nas bordas
-      position={[0, -1.1, 0]} 
-    />
-  );
+  return <primitive ref={plantRef} object={objetoFinal} scale={2.3} position={[0, -1.0, 0]} />;
 }
 
-export default function TelaPrincipal() {
+export default function App() {
   const [carregado, setCarregado] = useState(false);
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar style="dark" />
+      
       <View style={styles.appFrame}>
-        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.span}>Situação Atual</Text>
+          <Text style={styles.span}>SITUAÇÃO ATUAL</Text>
           <Text style={styles.h1}>Modelo 3D</Text>
-          <TouchableOpacity style={styles.informacoes}>
-            <Text style={styles.txtInformacoes}>mais informações</Text>
-          </TouchableOpacity>
         </View>
 
-        {/* Canvas Container */}
         <View style={styles.canvasContainer}>
           {!carregado && (
             <View style={styles.loadingArea}>
               <ActivityIndicator size="large" color="#6ab04c" />
-              <Text style={{ marginTop: 10, color: '#999' }}>Carregando Modelo...</Text>
             </View>
           )}
 
           <Canvas 
-            camera={{ 
-              position: [0, 2, 6], // Afastei a câmera (de 5 para 6)
-              fov: 45,             // Field of View: maior ângulo de visão
-              near: 0.1,           // Renderiza tudo que estiver bem perto
-              far: 1000            // Evita que o fundo corte o modelo
+            key="canvas-planta" // Força o refresh da memória do Expo
+            camera={{ position: [0, 1.5, 6.5], fov: 50 }} // Câmera mais próxima e centralizada
+            onCreated={(state) => {
+              const gl = state.gl as THREE.WebGLRenderer;
+              gl.setClearColor('#ffffff');
+              (gl as any).outputColorSpace = THREE.SRGBColorSpace;
             }}
           >
-            <ambientLight intensity={0.8} />
-            <pointLight position={[10, 10, 10]} intensity={1.5} />
-            <directionalLight position={[-5, 5, 5]} intensity={1} />
-            
-            <Suspense fallback={null}>
-              <ModeloPlanta onLoaded={() => setCarregado(true)} />
-              
-              {/* Montinho de terra Menor e com Triângulos */}
-              <mesh 
-                position={[0, -1.25, 0]} 
-                rotation={[0.5, 0, 0]} 
-                scale={[1.0, 0.4, 1.0]} 
-              >
-                <dodecahedronGeometry args={[1, 0]} /> 
-                <meshStandardMaterial 
-                  color="#3d2b1f" 
-                  flatShading={true} 
-                  roughness={1} 
-                />
-              </mesh>
+            <ambientLight intensity={2.5} /> 
+            <hemisphereLight intensity={1.5} color="#ffffff" groundColor="#1a110a" />
+            <directionalLight position={[5, 10, 5]} intensity={2.0} />
 
-              <ContactShadows opacity={0.4} scale={6} blur={2.4} far={1} position={[0, -1.26, 0]} />
+            <Suspense fallback={null}>
+              <group>
+                <ModeloPlanta setPronto={setCarregado} />
+                
+                {/* Montinho de Terra - Mantido escuro como você pediu */}
+                <mesh position={[0, -1.2, 0]} rotation={[0.5, 0, 0]} scale={[1.3, 0.5, 1.3]}>
+                  <dodecahedronGeometry args={[1, 0]} /> 
+                  <meshStandardMaterial color="#1a110a" roughness={1} flatShading />
+                </mesh>
+              </group>
             </Suspense>
 
-            <OrbitControls 
-              enablePan={false} 
-              enableZoom={true} 
-              minDistance={3.6} // Impede de chegar perto demais e bugar
-              maxDistance={9}   // Impede de sumir no infinito
-            />
+            <OrbitControls makeDefault enablePan={false} minDistance={4} maxDistance={10} />
           </Canvas>
         </View>
 
-        {/* Stats Grid */}
         <View style={styles.statsGrid}>
-          <View style={[styles.card, styles.temp]}>
+          <View style={[styles.card, { backgroundColor: '#fff9eb' }]}>
             <Text style={styles.label}>TEMPERATURA</Text>
             <Text style={styles.value}>24.5°C</Text>
           </View>
-          <View style={[styles.card, styles.hum]}>
+          <View style={[styles.card, { backgroundColor: '#f2fcf2' }]}>
             <Text style={styles.label}>UMIDADE</Text>
             <Text style={styles.value}>62%</Text>
           </View>
@@ -120,7 +112,6 @@ export default function TelaPrincipal() {
           </View>
         </View>
 
-        {/* Menu Inferior */}
         <View style={styles.menu}>
           <TouchableOpacity><Text style={styles.subMenu}>Home</Text></TouchableOpacity>
           <TouchableOpacity><Text style={styles.subMenu}>Analise</Text></TouchableOpacity>
@@ -136,21 +127,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   appFrame: { flex: 1 },
   header: { padding: 20, paddingTop: 40 },
-  span: { color: '#999', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 },
-  h1: { fontSize: 24, fontWeight: 'bold', color: '#2d3436', marginVertical: 4 },
-  informacoes: { marginTop: 10, paddingVertical: 8, paddingHorizontal: 15, borderWidth: 2, borderColor: '#6ab04c', borderRadius: 20, alignSelf: 'flex-start' },
-  txtInformacoes: { color: '#6ab04c', fontSize: 14, fontWeight: 'bold' },
-  canvasContainer: { 
-    flex: 1.2, // Aumentei um pouco a proporção do ambiente 3D
-    justifyContent: 'center' 
-  },
-  loadingArea: { position: 'absolute', zIndex: 1, width: '100%', alignItems: 'center' },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', padding: 15, borderTopWidth: 1, borderTopColor: '#eee' },
+  span: { color: '#999', fontSize: 11 },
+  h1: { fontSize: 24, fontWeight: 'bold', color: '#2d3436' },
+  canvasContainer: { flex: 2.8, width: '100%' }, // Espaço amplo para a planta
+  loadingArea: { position: 'absolute', zIndex: 10, width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', padding: 15 },
   card: { width: '48%', padding: 15, borderRadius: 20, marginBottom: 12 },
-  temp: { backgroundColor: '#fff9eb' },
-  hum: { backgroundColor: '#f2fcf2' },
-  label: { fontSize: 10, color: '#777', fontWeight: 'bold', marginBottom: 5 },
-  value: { fontSize: 18, fontWeight: '800', color: '#2d3436' },
-  menu: { flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 30, paddingTop: 15, borderTopWidth: 1, borderTopColor: '#f0f0f0' },
-  subMenu: { fontSize: 12, fontWeight: 'bold', color: '#2d3436' },
+  label: { fontSize: 10, color: '#777', fontWeight: 'bold' },
+  value: { fontSize: 18, fontWeight: '800' },
+  menu: { flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 25, paddingTop: 15, borderTopWidth: 1, borderTopColor: '#f0f0f0' },
+  subMenu: { fontSize: 12, fontWeight: 'bold', color: '#333' },
 });
