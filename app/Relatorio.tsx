@@ -1,4 +1,5 @@
 import React from 'react';
+import { GlobalStyles } from './theme'; 
 import { 
   StyleSheet, 
   Text, 
@@ -135,6 +136,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
     color: '#2D6A4F',
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   closeBtn: {
     padding: 5,
@@ -151,12 +153,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#86868b',
     letterSpacing: 0.5,
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   title: {
     fontSize: 32,
     fontWeight: '800',
     color: '#1A1A1A',
     marginVertical: 5,
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   timeRow: {
     flexDirection: 'row',
@@ -165,6 +169,7 @@ const styles = StyleSheet.create({
   timeText: {
     color: '#86868b',
     fontSize: 12,
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   metricsGrid: {
     flexDirection: 'row',
@@ -185,12 +190,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#86868b',
     fontWeight: '600',
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   cardValue: {
     fontSize: 20,
     fontWeight: '700',
     color: '#1A1A1A',
     marginTop: 5,
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   statusBox: {
     marginTop: 15,
@@ -204,6 +211,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     color: '#1d1d1f',
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   footer: {
     padding: 25,
@@ -223,5 +231,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '700',
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
 });

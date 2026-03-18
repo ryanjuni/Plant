@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { GlobalStyles } from './theme'; 
 import { 
   StyleSheet, 
   Text, 
@@ -128,7 +129,6 @@ export default function NotificacoesScreen() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -146,6 +146,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#2d3436',
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   badge: {
     backgroundColor: '#ff7675',
@@ -157,6 +158,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   list: {
     paddingHorizontal: 20,
@@ -168,8 +170,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 15,
-    elevation: 3, // Sombra Android
-    shadowColor: '#000', // Sombra iOS
+    elevation: 3, 
+    shadowColor: '#000', 
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -190,16 +192,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#2d3436',
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   timestamp: {
     fontSize: 12,
     color: '#b2bec3',
     fontWeight: 'normal',
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   cardMessage: {
     fontSize: 14,
     color: '#636e72',
     marginTop: 2,
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   deleteBtn: {
     padding: 5,
@@ -209,6 +214,7 @@ const styles = StyleSheet.create({
     color: '#888',
     marginTop: 50,
     fontSize: 16,
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   // Estilos do Modal
   modalOverlay: {
@@ -230,6 +236,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#2d3436',
     marginBottom: 10,
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   modalBody: {
     fontSize: 14,
@@ -237,6 +244,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 20,
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   btnOk: {
     backgroundColor: '#2ecc71',
@@ -249,5 +257,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
 });

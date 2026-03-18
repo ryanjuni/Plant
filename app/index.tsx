@@ -7,6 +7,9 @@ import { useRouter } from 'expo-router';
 import * as THREE from 'three';
 import { MaterialCommunityIcons } from '@expo/vector-icons'; 
 
+// Importando o seu tema centralizado
+import { GlobalStyles } from './theme'; 
+
 const modelPath = require('../assets/tropical_plant_2.glb');
 
 interface ModeloProps {
@@ -14,11 +17,9 @@ interface ModeloProps {
 }
 
 function ModeloPlanta({ setPronto }: ModeloProps) {
-  // O segundo parâmetro 'true' ativa o cache persistente do useGLTF
   const { scene } = useGLTF(modelPath, true) as any;
   const plantRef = useRef<THREE.Group>(null);
 
-  // MEMÓRIA TRAVADA: O useMemo garante que o modelo não seja "re-processado"
   const objetoFinal = useMemo(() => {
     if (!scene) return null;
     const clone = scene.clone();
@@ -29,7 +30,6 @@ function ModeloPlanta({ setPronto }: ModeloProps) {
         }
         child.castShadow = true;
         child.receiveShadow = true;
-        // Otimização agressiva para mobile (Expo Go)
         if (child.material) {
           child.material.precision = 'lowp';
         }
@@ -53,7 +53,6 @@ function ModeloPlanta({ setPronto }: ModeloProps) {
 
   if (!objetoFinal) return null;
 
-  // O 'dispose={null}' impede que o Expo limpe o modelo da memória RAM do nada
   return <primitive ref={plantRef} object={objetoFinal} scale={2.4} position={[0, -0.8, 0]} dispose={null} />;
 }
 
@@ -83,16 +82,14 @@ export default function App() {
           )}
 
           <Canvas 
-            key="main-canvas" // Força o React a manter a mesma instância do Canvas
+            key="main-canvas" 
             camera={{ position: [0, 2, 8], fov: 45 }}
             frameloop="always" 
             onCreated={(state) => {
               state.gl.setClearColor('#ffffff');
-              // Ajuste de cores para não perder saturação no Mobile
               state.gl.toneMapping = THREE.NoToneMapping; 
             }}
           >
-            {/* Iluminação que valoriza o vaso marrom café */}
             <ambientLight intensity={1.5} /> 
             <hemisphereLight args={['#ffffff', '#3d2b1f', 1.2]} />
             <pointLight position={[10, 10, 10]} intensity={2} />
@@ -101,8 +98,6 @@ export default function App() {
             <Suspense fallback={null}>
               <group key="plant-group">
                 <ModeloPlanta setPronto={setCarregado} />
-                
-                {/* Vaso com cor sólida (6 dígitos) para evitar erro no Android */}
                 <mesh position={[0, -1.0, 0]} rotation={[0.5, 0, 0]} scale={[1.4, 0.6, 1.4]} dispose={null}>
                   <dodecahedronGeometry args={[1, 0]} /> 
                   <meshStandardMaterial 
@@ -174,16 +169,46 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   appFrame: { flex: 1 },
   header: { padding: 20, paddingTop: 40 },
-  span: { color: '#999', fontSize: 11 },
-  h1: { fontSize: 24, fontWeight: 'bold', color: '#2d3436' },
+  span: { 
+    color: '#999', 
+    fontSize: 11, 
+    fontFamily: GlobalStyles.fontFamily // Aplicado
+  },
+  h1: { 
+    fontSize: 24, 
+    fontWeight: 'bold', 
+    color: GlobalStyles.color, 
+    fontFamily: GlobalStyles.fontFamily // Aplicado
+  },
   canvasContainer: { flex: 3, width: '100%' }, 
   loadingArea: { position: 'absolute', zIndex: 10, width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   logoCard: { width: 160, height: 160, backgroundColor: '#fff', borderRadius: 35, justifyContent: 'center', alignItems: 'center', elevation: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.12, shadowRadius: 15 },
-  loadingText: { marginTop: 15, fontSize: 14, color: '#6ab04c', fontWeight: '500' },
+  loadingText: { 
+    marginTop: 15, 
+    fontSize: 14, 
+    color: '#6ab04c', 
+    fontWeight: '500', 
+    fontFamily: GlobalStyles.fontFamily // Aplicado
+  },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 10 },
   card: { width: '48%', padding: 15, borderRadius: 20, marginBottom: 12 },
-  label: { fontSize: 10, color: '#777', fontWeight: 'bold', marginTop: 5 },
-  value: { fontSize: 18, fontWeight: '800' },
+  label: { 
+    fontSize: 10, 
+    color: '#777', 
+    fontWeight: 'bold', 
+    marginTop: 5, 
+    fontFamily: GlobalStyles.fontFamily // Aplicado
+  },
+  value: { 
+    fontSize: 18, 
+    fontWeight: '800', 
+    fontFamily: GlobalStyles.fontFamily // Aplicado
+  },
   menu: { flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 25, paddingTop: 15, borderTopWidth: 1, borderTopColor: '#f0f0f0', backgroundColor: '#fff' },
-  subMenu: { fontSize: 12, fontWeight: 'bold', color: '#333' },
+  subMenu: { 
+    fontSize: 12, 
+    fontWeight: 'bold', 
+    color: '#333', 
+    fontFamily: GlobalStyles.fontFamily // Aplicado
+  },
 });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { GlobalStyles } from './theme'; 
 import { 
   StyleSheet, 
   Text, 
@@ -101,6 +102,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: -0.4,
     color: '#000',
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -117,6 +119,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     marginBottom: 16,
     marginLeft: 4,
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   card: {
     backgroundColor: '#fbfbfb', 
@@ -139,6 +142,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     marginLeft: 14,
     color: '#2d3436',
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   logoutButton: {
     marginTop: 10,
@@ -151,9 +155,11 @@ const styles = StyleSheet.create({
     color: '#ff3b30',
     fontWeight: '600',
     fontSize: 15,
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   logoutText: {
     color: '#ff3b30',
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
   footerText: {
     textAlign: 'center',
@@ -161,5 +167,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 32,
     letterSpacing: 0.5,
+    fontFamily: GlobalStyles.fontFamily, // Aplicado
   },
 });

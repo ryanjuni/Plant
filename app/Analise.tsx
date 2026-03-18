@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { GlobalStyles } from './theme'; 
 import { 
   StyleSheet, 
   Text, 
@@ -154,21 +155,34 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     marginBottom: 30 
   },
-  title: { fontSize: 24, fontWeight: '800', color: '#1B4332' },
+  title: { 
+    fontSize: 24, 
+    fontWeight: '800', 
+    color: '#1B4332',
+    fontFamily: GlobalStyles.fontFamily // Aplicado
+  },
   closeBtn: { 
     backgroundColor: '#FFF', 
     padding: 10, 
     borderRadius: 25,
-    elevation: 3, // Sombra no Android
-    shadowColor: '#000', // Sombra no iOS
+    elevation: 3, 
+    shadowColor: '#000', 
     shadowOpacity: 0.1,
     shadowRadius: 5,
   },
   tabs: { flexDirection: 'row', gap: 20, marginBottom: 20, borderBottomWidth: 1, borderBottomColor: '#EEE' },
   tabLink: { paddingBottom: 10 },
   tabActive: { borderBottomWidth: 3, borderBottomColor: '#1B4332' },
-  tabText: { fontSize: 16, color: '#888', fontWeight: '600' },
-  tabTextActive: { color: '#1B4332' },
+  tabText: { 
+    fontSize: 16, 
+    color: '#888', 
+    fontWeight: '600',
+    fontFamily: GlobalStyles.fontFamily // Aplicado
+  },
+  tabTextActive: { 
+    color: '#1B4332',
+    fontFamily: GlobalStyles.fontFamily // Aplicado
+  },
   chartCard: { 
     backgroundColor: '#FFF', 
     borderRadius: 24, 
@@ -191,8 +205,23 @@ const styles = StyleSheet.create({
     borderWidth: 1, 
     borderColor: '#F0F0F0' 
   },
-  metricLabel: { fontSize: 11, color: '#888', fontWeight: 'bold' },
-  metricValue: { fontSize: 20, fontWeight: '700', color: '#333' },
+  metricLabel: { 
+    fontSize: 11, 
+    color: '#888', 
+    fontWeight: 'bold',
+    fontFamily: GlobalStyles.fontFamily // Aplicado
+  },
+  metricValue: { 
+    fontSize: 20, 
+    fontWeight: '700', 
+    color: '#333',
+    fontFamily: GlobalStyles.fontFamily // Aplicado
+  },
   badge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
-  badgeText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' }
+  badgeText: { 
+    color: '#FFF', 
+    fontSize: 10, 
+    fontWeight: 'bold',
+    fontFamily: GlobalStyles.fontFamily // Aplicado
+  }
 });
