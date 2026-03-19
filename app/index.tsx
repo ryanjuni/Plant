@@ -7,157 +7,193 @@ import { useRouter } from 'expo-router';
 import * as THREE from 'three';
 import { MaterialCommunityIcons } from '@expo/vector-icons'; 
 
-// Importando o seu tema centralizado
 import { GlobalStyles } from './theme'; 
+import { buscarDadosTrefle, atualizarClimaAgro } from '../Api/services'; 
 
-const modelPath = require('../assets/tropical_plant_2.glb');
+const modelPath = require('../assets/watermelon_bush.glb');
 
-interface ModeloProps {
-  setPronto: (val: boolean) => void;
-}
+const tradutorClima: { [key: string]: string } = {
+  "clear sky": "Sol Pleno",
+  "few clouds": "Sol Parcial",
+  "scattered clouds": "Nublado",
+  "broken clouds": "Encoberto",
+  "shower rain": "Chuva Leve",
+  "rain": "Chuva",
+  "thunderstorm": "Tempestade",
+  "mist": "Neblina"
+};
 
-function ModeloPlanta({ setPronto }: ModeloProps) {
-  const { scene } = useGLTF(modelPath, true) as any;
+function ModeloPlanta({ setPronto }: { setPronto: (val: boolean) => void }) {
+  const { scene } = useGLTF(modelPath) as any;
   const plantRef = useRef<THREE.Group>(null);
 
-  const objetoFinal = useMemo(() => {
+  const objetoProcessado = useMemo(() => {
     if (!scene) return null;
     const clone = scene.clone();
     clone.traverse((child: any) => {
-      if (child.isMesh) {
-        if (child.name.toLowerCase().includes('plane') || child.name.toLowerCase().includes('floor')) {
-          child.visible = false;
-        }
+      if (child?.isMesh) {
+        if (child.name?.toLowerCase().includes('plane')) child.visible = false;
         child.castShadow = true;
-        child.receiveShadow = true;
-        if (child.material) {
-          child.material.precision = 'lowp';
-        }
       }
     });
     return clone;
   }, [scene]);
 
   useEffect(() => {
-    if (objetoFinal) {
-      const timer = setTimeout(() => setPronto(true), 200);
-      return () => clearTimeout(timer);
-    }
-  }, [objetoFinal, setPronto]);
+    if (objetoProcessado) setPronto(true);
+  }, [objetoProcessado, setPronto]);
 
-  useFrame((state, delta) => {
-    if (plantRef.current) {
-      plantRef.current.rotation.y += 0.12 * delta;
-    }
+  useFrame((_, delta) => {
+    if (plantRef.current) plantRef.current.rotation.y += 0.15 * delta;
   });
 
-  if (!objetoFinal) return null;
-
-  return <primitive ref={plantRef} object={objetoFinal} scale={2.4} position={[0, -0.8, 0]} dispose={null} />;
+  return objetoProcessado ? <primitive ref={plantRef} object={objetoProcessado} scale={2.5} position={[0, -0.6, 0]} /> : null;
 }
 
-export default function App() {
+export default function IndexScreen() {
+  const router = useRouter();
   const [carregado, setCarregado] = useState(false);
-  const router = useRouter(); 
+  const isMounted = useRef(true);
+
+  const [dadosCultivo, setDadosCultivo] = useState({
+    temperatura: "--",
+    umidadeAr: "--",
+    riscoSeca: "Baixo",
+    luzSolar: "Boa",
+    dica: "Sincronizando dados..."
+  });
+
+  const [extraInfo, setExtraInfo] = useState({
+    statusCeu: "Buscando...",
+    especie: "MELANCIA"
+  });
+
+  useEffect(() => {
+    isMounted.current = true;
+    
+    const carregarInteligenciaAgro = async () => {
+      const clima = await atualizarClimaAgro(-19.7675, -44.0886);
+      
+      if (clima && isMounted.current) {
+        const temp = Math.round(clima.main.temp - 273.15);
+        const umid = clima.main.humidity;
+        const nuvens = clima.clouds.all;
+        const vento = clima.wind.speed;
+
+        let luz = "Excelente";
+        if (nuvens > 50) luz = "Moderada";
+        if (nuvens > 80) luz = "Baixa";
+
+        let seca = "Baixo";
+        if (temp > 28 && umid < 50) seca = "ALTO";
+        else if (temp > 22 || vento > 5) seca = "Médio";
+
+        let recomendacao = "Planta em condições ideais.";
+        if (seca === "ALTO") recomendacao = "Solo secando rápido! Regue agora.";
+        else if (umid > 85) recomendacao = "Muita umidade. Cuidado com fungos.";
+        else if (temp < 15) recomendacao = "Frio detectado. Proteja a muda.";
+
+        setDadosCultivo({
+          temperatura: temp.toString(),
+          umidadeAr: umid.toString(),
+          riscoSeca: seca,
+          luzSolar: luz,
+          dica: recomendacao
+        });
+
+        const descIngles = clima.weather[0].description.toLowerCase();
+        setExtraInfo(prev => ({ 
+          ...prev, 
+          statusCeu: tradutorClima[descIngles] || descIngles 
+        }));
+      }
+
+      const planta = await buscarDadosTrefle('watermelon');
+      if (planta && isMounted.current) {
+        setExtraInfo(prev => ({ ...prev, especie: `MELANCIA (${planta.scientific_name})` }));
+      }
+    };
+
+    carregarInteligenciaAgro();
+    return () => { isMounted.current = false; };
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      
       <View style={styles.appFrame}>
+        
         <View style={styles.header}>
-          <Text style={styles.span}>SITUAÇÃO ATUAL</Text>
-          <Text style={styles.h1}>Monitoramento</Text>
+          <Text style={styles.span}>{extraInfo.especie.toUpperCase()}</Text>
+          <Text style={styles.h1}>Meu Cultivo</Text>
+          <View style={styles.dicaContainer}>
+            <MaterialCommunityIcons name="lightbulb-on" size={14} color="#6ab04c" />
+            <Text style={styles.dicaText}>{dadosCultivo.dica}</Text>
+          </View>
         </View>
 
         <View style={styles.canvasContainer}>
-          {!carregado && (
-            <View style={styles.loadingArea}>
-              <View style={styles.logoCard}>
-                <MaterialCommunityIcons name="leaf" size={100} color="#6ab04c" />
-              </View>
-              <ActivityIndicator size="large" color="#6ab04c" style={{ marginTop: 25 }} />
-              <Text style={styles.loadingText}>Sincronizando planta...</Text>
-            </View>
-          )}
-
-          <Canvas 
-            key="main-canvas" 
-            camera={{ position: [0, 2, 8], fov: 45 }}
-            frameloop="always" 
-            onCreated={(state) => {
-              state.gl.setClearColor('#ffffff');
-              state.gl.toneMapping = THREE.NoToneMapping; 
-            }}
-          >
-            <ambientLight intensity={1.5} /> 
-            <hemisphereLight args={['#ffffff', '#3d2b1f', 1.2]} />
-            <pointLight position={[10, 10, 10]} intensity={2} />
-            <directionalLight position={[-5, 5, 5]} intensity={1.2} />
-
+          {!carregado && <ActivityIndicator style={StyleSheet.absoluteFill} color="#6ab04c" />}
+          <Canvas camera={{ position: [0, 2, 7], fov: 45 }}>
+            <ambientLight intensity={0.8} /> 
+            <pointLight position={[5, 5, 5]} intensity={1.5} />
             <Suspense fallback={null}>
-              <group key="plant-group">
+              <group>
                 <ModeloPlanta setPronto={setCarregado} />
-                <mesh position={[0, -1.0, 0]} rotation={[0.5, 0, 0]} scale={[1.4, 0.6, 1.4]} dispose={null}>
+                <mesh position={[0, -1.0, 0]} rotation={[0.5, 0, 0]} scale={[1.4, 0.6, 1.4]}>
                   <dodecahedronGeometry args={[1, 0]} /> 
-                  <meshStandardMaterial 
-                    color="#5d4037" 
-                    roughness={0.4} 
-                    metalness={0.3}
-                    flatShading 
-                  />
+                  <meshStandardMaterial color="#5d4037" roughness={0.8} />
                 </mesh>
               </group>
             </Suspense>
-
-            <OrbitControls 
-              makeDefault 
-              enablePan={false}         
-              minDistance={5}           
-              maxDistance={12}           
-              minPolarAngle={Math.PI / 4} 
-              maxPolarAngle={Math.PI / 1.8} 
-              enableDamping={true}      
-              dampingFactor={0.07}
-            />
+            <OrbitControls enablePan={false} />
           </Canvas>
         </View>
 
         <View style={styles.statsGrid}>
           <View style={[styles.card, { backgroundColor: '#fff9eb' }]}>
-            <MaterialCommunityIcons name="thermometer" size={20} color="#ffa502" />
-            <Text style={styles.label}>TEMPERATURA</Text>
-            <Text style={styles.value}>24.5°C</Text>
+            <MaterialCommunityIcons name="thermometer" size={18} color="#ffa502" />
+            <Text style={styles.label}>CALOR AMBIENTE</Text>
+            <Text style={styles.value}>{dadosCultivo.temperatura}°C</Text>
           </View>
-          <View style={[styles.card, { backgroundColor: '#f2fcf2' }]}>
-            <MaterialCommunityIcons name="water-percent" size={20} color="#2ed573" />
-            <Text style={styles.label}>UMIDADE</Text>
-            <Text style={styles.value}>62%</Text>
-          </View>
+
           <View style={[styles.card, { backgroundColor: '#f0f7ff' }]}>
-            <MaterialCommunityIcons name="white-balance-sunny" size={20} color="#1e90ff" />
-            <Text style={styles.label}>LUZ</Text>
-            <Text style={styles.value}>88%</Text>
+            <MaterialCommunityIcons name="white-balance-sunny" size={18} color="#1e90ff" />
+            <Text style={styles.label}>LUZ SOLAR</Text>
+            <Text style={styles.value}>{dadosCultivo.luzSolar}</Text>
           </View>
-          <View style={[styles.card, { backgroundColor: '#f7f2f7' }]}>
-            <MaterialCommunityIcons name="heart-pulse" size={20} color="#ff4757" />
-            <Text style={styles.label}>SAÚDE</Text>
-            <Text style={styles.value}>Excelente</Text>
+
+          <View style={[styles.card, { backgroundColor: '#f2fcf2' }]}>
+            <MaterialCommunityIcons name="water-percent" size={18} color="#2ed573" />
+            <Text style={styles.label}>UMIDADE AR</Text>
+            <Text style={styles.value}>{dadosCultivo.umidadeAr}%</Text>
+          </View>
+
+          <View style={[styles.card, { backgroundColor: '#fef1f1' }]}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={18} color="#ff4757" />
+            <Text style={styles.label}>RISCO DE SECA</Text>
+            <Text style={[styles.value, {color: dadosCultivo.riscoSeca === 'ALTO' ? '#ff4757' : '#2d3436'}]}>
+              {dadosCultivo.riscoSeca}
+            </Text>
           </View>
         </View>
 
+        {/* MENU COM NAVEGAÇÃO REATIVADA */}
         <View style={styles.menu}>
-          <TouchableOpacity onPress={() => router.push('/')}>
-            <Text style={styles.subMenu}>Home</Text>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.replace('/')}>
+             <MaterialCommunityIcons name="home-variant" size={26} color="#000" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/Analise')}>
-            <Text style={styles.subMenu}>Analise</Text>
+          
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/Analise')}>
+             <MaterialCommunityIcons name="chart-timeline-variant" size={26} color="#a0a0a0" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/Relatorio')}>
-            <Text style={styles.subMenu}>Relatório</Text>
+          
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/Relatorio')}>
+             <MaterialCommunityIcons name="file-document-outline" size={26} color="#a0a0a0" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/Config')}>
-            <Text style={styles.subMenu}>Config</Text>
+          
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/Config')}>
+             <MaterialCommunityIcons name="cog-outline" size={26} color="#a0a0a0" />
           </TouchableOpacity>
         </View>
       </View>
@@ -168,47 +204,16 @@ export default function App() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   appFrame: { flex: 1 },
-  header: { padding: 20, paddingTop: 40 },
-  span: { 
-    color: '#999', 
-    fontSize: 11, 
-    fontFamily: GlobalStyles.fontFamily // Aplicado
-  },
-  h1: { 
-    fontSize: 24, 
-    fontWeight: 'bold', 
-    color: GlobalStyles.color, 
-    fontFamily: GlobalStyles.fontFamily // Aplicado
-  },
-  canvasContainer: { flex: 3, width: '100%' }, 
-  loadingArea: { position: 'absolute', zIndex: 10, width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
-  logoCard: { width: 160, height: 160, backgroundColor: '#fff', borderRadius: 35, justifyContent: 'center', alignItems: 'center', elevation: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.12, shadowRadius: 15 },
-  loadingText: { 
-    marginTop: 15, 
-    fontSize: 14, 
-    color: '#6ab04c', 
-    fontWeight: '500', 
-    fontFamily: GlobalStyles.fontFamily // Aplicado
-  },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 10 },
-  card: { width: '48%', padding: 15, borderRadius: 20, marginBottom: 12 },
-  label: { 
-    fontSize: 10, 
-    color: '#777', 
-    fontWeight: 'bold', 
-    marginTop: 5, 
-    fontFamily: GlobalStyles.fontFamily // Aplicado
-  },
-  value: { 
-    fontSize: 18, 
-    fontWeight: '800', 
-    fontFamily: GlobalStyles.fontFamily // Aplicado
-  },
-  menu: { flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 25, paddingTop: 15, borderTopWidth: 1, borderTopColor: '#f0f0f0', backgroundColor: '#fff' },
-  subMenu: { 
-    fontSize: 12, 
-    fontWeight: 'bold', 
-    color: '#333', 
-    fontFamily: GlobalStyles.fontFamily // Aplicado
-  },
+  header: { paddingHorizontal: 25, paddingTop: 30 },
+  span: { color: '#bbb', fontSize: 10, fontWeight: '700', letterSpacing: 1 },
+  h1: { fontSize: 26, fontWeight: '800', color: '#2d3436', marginTop: 4 },
+  dicaContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 8, backgroundColor: '#f2fcf2', padding: 8, borderRadius: 12 },
+  dicaText: { fontSize: 12, color: '#6ab04c', fontWeight: '600', marginLeft: 6 },
+  canvasContainer: { flex: 1, minHeight: 330 }, 
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 25, marginBottom: 20 },
+  card: { width: '47%', padding: 18, borderRadius: 24, marginBottom: 15 },
+  label: { fontSize: 9, color: '#888', fontWeight: 'bold', marginTop: 8 },
+  value: { fontSize: 20, fontWeight: '800', color: '#2d3436' },
+  menu: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', height: 85, borderTopWidth: 1, borderTopColor: '#f8f8f8' },
+  menuItem: { padding: 15 }
 });

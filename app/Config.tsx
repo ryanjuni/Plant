@@ -50,7 +50,7 @@ export default function ConfigScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <MaterialCommunityIcons name="close" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Ajustes</Text>
+        <Text style={styles.headerTitle}>Configurações</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -58,12 +58,11 @@ export default function ConfigScreen() {
         
         <Section title="Conta">
           <SettingItem icon="account-outline" label="Perfil do Usuário" onPress={() => {}} />
-          <SettingItem icon="wallet-outline" label="Plano Premium" onPress={() => {}} />
         </Section>
 
         <Section title="Horta Digital">
-          <SettingItem icon="bell-outline" label="Notificações" onPress={() => {}} />
-          <SettingItem icon="cube-outline" label="Renderização 3D" onPress={() => {}} />
+          <SettingItem icon="bell-outline" label="Notificações" onPress={() =>  router.push('./Alertas')} />
+          <SettingItem icon="cube-outline" label="Cadastro de plantas e espécies" onPress={() => router.push('./Cadastrar')} />
           <SettingItem icon="database-outline" label="Dados do Sensor" onPress={() => {}} />
         </Section>
 
@@ -79,7 +78,7 @@ export default function ConfigScreen() {
           <Text style={styles.logoutButtonText}>Encerrar Sessão</Text>
         </TouchableOpacity>
 
-        <Text style={styles.footerText}>v1.0.2 • Desenvolvido por Ryan</Text>
+        <Text style={styles.footerText}>v1.0.2 • Desenvolvido pela Equipe</Text>
       </ScrollView>
     </SafeAreaView>
   );

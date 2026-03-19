@@ -8,29 +8,34 @@ import {
   TouchableOpacity, 
   Modal, 
   SafeAreaView, 
+  StatusBar,
   Platform 
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
-// Interface para as notificações
 interface Notification {
   id: string;
   title: string;
   message: string;
-  icon: any; // Nome do ícone do MaterialCommunityIcons
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
   color: string;
   time: string;
   fullMessage: string;
 }
 
 export default function NotificacoesScreen() {
+  const router = useRouter(); // Hook de navegação
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedNotify, setSelectedNotify] = useState<Notification | null>(null);
+  
   const [notifications, setNotifications] = useState<Notification[]>([
     { 
       id: '1', 
       title: 'Umidade Baixa', 
       message: 'Sensor 01 detectou solo crítico.', 
       icon: 'water-alert', 
-      color: '#ff7675', 
+      color: '#ff3b30', 
       time: '5 min',
       fullMessage: 'A Samambaia precisa de água imediatamente! O nível de umidade está abaixo de 20%.'
     },
@@ -39,54 +44,64 @@ export default function NotificacoesScreen() {
       title: 'Relatório Diário', 
       message: 'Tudo sob controle no monitoramento.', 
       icon: 'leaf', 
-      color: '#2ecc71', 
+      color: '#34c759', 
       time: 'Ontem',
       fullMessage: 'Seu jardim está em perfeitas condições hoje. Todos os sensores operando normalmente.'
     },
   ]);
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedNotify, setSelectedNotify] = useState<Notification | null>(null);
-
-  // Abrir detalhes da notificação
   const openNotify = (item: Notification) => {
     setSelectedNotify(item);
     setModalVisible(true);
   };
 
-  // Deletar notificação
   const deleteNotify = (id: string) => {
     setNotifications(prev => prev.filter(item => item.id !== id));
   };
 
   const renderItem = ({ item }: { item: Notification }) => (
-    <TouchableOpacity style={styles.card} onPress={() => openNotify(item)}>
-      <View style={styles.iconBox}>
-        <MaterialCommunityIcons name={item.icon} size={24} color={item.color} />
+    <TouchableOpacity 
+      activeOpacity={0.7} 
+      style={styles.card} 
+      onPress={() => openNotify(item)}
+    >
+      <View style={[styles.iconBox, { backgroundColor: item.color + '15' }]}>
+        <MaterialCommunityIcons name={item.icon} size={22} color={item.color} />
       </View>
       
       <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>
-          {item.title} <Text style={styles.timestamp}>• {item.time}</Text>
-        </Text>
-        <Text style={styles.cardMessage}>{item.message}</Text>
+        <View style={styles.cardHeaderRow}>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+          <Text style={styles.timestamp}>{item.time}</Text>
+        </View>
+        <Text style={styles.cardMessage} numberOfLines={1}>{item.message}</Text>
       </View>
 
       <TouchableOpacity onPress={() => deleteNotify(item.id)} style={styles.deleteBtn}>
-        <MaterialCommunityIcons name="close" size={20} color="#dfe6e9" />
+        <MaterialCommunityIcons name="close-circle-outline" size={20} color="#d1d1d6" />
       </TouchableOpacity>
     </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      
+      {/* Header com botão de fechar corrigido */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Alertas do Sistema</Text>
-        {notifications.length > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{notifications.length} novas</Text>
-          </View>
-        )}
+        <TouchableOpacity 
+          // MUDEI AQUI: router.replace('/') garante que volte para a raiz (index)
+          onPress={() => router.replace('/')} 
+          style={styles.closeButton}
+          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+        >
+          <MaterialCommunityIcons name="close" size={26} color="#000" />
+        </TouchableOpacity>
+        
+        <Text style={styles.headerTitle}>Alertas</Text>
+        
+        {/* View vazia apenas para equilibrar o Flexbox e centralizar o título */}
+        <View style={{ width: 40 }} /> 
       </View>
 
       <FlatList
@@ -95,32 +110,23 @@ export default function NotificacoesScreen() {
         renderItem={renderItem}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>Nenhum alerta pendente.</Text>
+          <View style={styles.emptyContainer}>
+            <MaterialCommunityIcons name="bell-off-outline" size={48} color="#d1d1d6" />
+            <Text style={styles.emptyText}>Nenhum alerta pendente</Text>
+          </View>
         }
       />
 
-      {/* Modal de Detalhes (Pop-up) */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal animationType="fade" transparent visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <MaterialCommunityIcons 
-              name={selectedNotify?.icon || 'bell'} 
-              size={50} 
-              color={selectedNotify?.color || '#2ecc71'} 
-              style={{ marginBottom: 10 }}
-            />
+            <View style={[styles.modalIconCircle, { backgroundColor: selectedNotify?.color + '15' }]}>
+               <MaterialCommunityIcons name={selectedNotify?.icon || 'bell'} size={32} color={selectedNotify?.color} />
+            </View>
             <Text style={styles.modalTitle}>{selectedNotify?.title}</Text>
             <Text style={styles.modalBody}>{selectedNotify?.fullMessage}</Text>
             
-            <TouchableOpacity 
-              style={styles.btnOk} 
-              onPress={() => setModalVisible(false)}
-            >
+            <TouchableOpacity style={styles.btnOk} onPress={() => setModalVisible(false)}>
               <Text style={styles.btnOkText}>Entendido</Text>
             </TouchableOpacity>
           </View>
@@ -129,134 +135,141 @@ export default function NotificacoesScreen() {
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f2f5',
-    paddingTop: Platform.OS === 'android' ? 40 : 0,
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingVertical: 15,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    zIndex: 10, // Garante que o botão esteja acima de outros elementos
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2d3436',
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
-  },
-  badge: {
-    backgroundColor: '#ff7675',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  badgeText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#000',
+    fontFamily: GlobalStyles.fontFamily,
   },
   list: {
     paddingHorizontal: 20,
+    paddingTop: 10,
   },
   card: {
-    backgroundColor: 'white',
-    borderRadius: 18,
-    padding: 15,
+    backgroundColor: '#fbfbfb',
+    borderRadius: 20,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
-    elevation: 3, 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
   iconBox: {
-    width: 45,
-    height: 45,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: 12,
   },
   cardContent: {
     flex: 1,
   },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '600',
     color: '#2d3436',
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
+    fontFamily: GlobalStyles.fontFamily,
   },
   timestamp: {
-    fontSize: 12,
-    color: '#b2bec3',
-    fontWeight: 'normal',
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
+    fontSize: 11,
+    color: '#a0a0a0',
+    fontFamily: GlobalStyles.fontFamily,
   },
   cardMessage: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#636e72',
-    marginTop: 2,
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
+    fontFamily: GlobalStyles.fontFamily,
   },
   deleteBtn: {
-    padding: 5,
+    paddingLeft: 10,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 100,
   },
   emptyText: {
-    textAlign: 'center',
-    color: '#888',
-    marginTop: 50,
-    fontSize: 16,
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
+    color: '#a0a0a0',
+    fontSize: 14,
+    marginTop: 10,
+    fontFamily: GlobalStyles.fontFamily,
   },
-  // Estilos do Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   modalContent: {
-    width: 280,
+    width: '100%',
+    maxWidth: 320,
     backgroundColor: 'white',
-    borderRadius: 24,
-    padding: 25,
+    borderRadius: 28,
+    padding: 24,
     alignItems: 'center',
-    elevation: 10,
+  },
+  modalIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2d3436',
-    marginBottom: 10,
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000',
+    marginBottom: 8,
+    fontFamily: GlobalStyles.fontFamily,
   },
   modalBody: {
     fontSize: 14,
     color: '#636e72',
     textAlign: 'center',
     lineHeight: 20,
-    marginBottom: 20,
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
+    marginBottom: 24,
+    fontFamily: GlobalStyles.fontFamily,
   },
   btnOk: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: '#000',
     width: '100%',
-    padding: 12,
-    borderRadius: 12,
+    padding: 16,
+    borderRadius: 16,
     alignItems: 'center',
   },
   btnOkText: {
     color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
+    fontWeight: '600',
+    fontSize: 15,
+    fontFamily: GlobalStyles.fontFamily,
   },
 });
