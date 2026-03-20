@@ -1,5 +1,4 @@
 import React from 'react';
-import { GlobalStyles } from './theme'; 
 import { 
   StyleSheet, 
   Text, 
@@ -12,6 +11,8 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { GlobalStyles } from './theme'; 
+import { useLanguage } from './LanguageContext'; // Importando o contexto global
 
 const SettingItem = ({ icon, label, onPress, isLogout }: any) => (
   <TouchableOpacity 
@@ -25,7 +26,7 @@ const SettingItem = ({ icon, label, onPress, isLogout }: any) => (
         size={22} 
         color={isLogout ? "#ff3b30" : "#2d3436"} 
       />
-      <Text style={[styles.label, isLogout && styles.logoutText]}>{label}</Text>
+      <Text style={[styles.label, isLogout && { color: '#ff3b30' }]}>{label}</Text>
     </View>
     <MaterialCommunityIcons name="chevron-right" size={18} color="#d1d1d6" />
   </TouchableOpacity>
@@ -40,42 +41,54 @@ const Section = ({ children, title }: any) => (
 
 export default function ConfigScreen() {
   const router = useRouter();
+  const { t } = useLanguage(); // Função de tradução global
+
+  const handleLogout = () => {
+    Alert.alert(
+      t('logout'), 
+      "Deseja encerrar a sessão?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Sair", style: "destructive", onPress: () => router.replace('/Login') }
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
-      {/* Header Minimalista */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/')}>
           <MaterialCommunityIcons name="close" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Configurações</Text>
+        <Text style={styles.headerTitle}>{t('settings_title')}</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
-        <Section title="Conta">
-          <SettingItem icon="account-outline" label="Perfil do Usuário" onPress={() => {}} />
+        <Section title={t('account_section')}>
+          <SettingItem 
+            icon="account-outline" 
+            label={t('profile_user')} 
+            onPress={() => router.push('/Perfil')} 
+          />
         </Section>
 
-        <Section title="Horta Digital">
-          <SettingItem icon="bell-outline" label="Notificações" onPress={() =>  router.push('./Alertas')} />
-          <SettingItem icon="cube-outline" label="Cadastro de plantas e espécies" onPress={() => router.push('./Cadastrar')} />
-          <SettingItem icon="database-outline" label="Dados do Sensor" onPress={() => {}} />
+        <Section title={t('horta_section')}>
+          <SettingItem icon="bell-outline" label={t('notifications')} onPress={() => router.push('/Alertas')} />
+          <SettingItem icon="cube-outline" label="Cadastro de plantas" onPress={() => router.push('/Cadastrar')} />
+          <SettingItem icon="database-outline" label={t('sensor_data')} onPress={() => router.push('/DadosSensor')} />
         </Section>
 
-        <Section title="Geral">
-          <SettingItem icon="earth" label="Idioma" onPress={() => {}} />
-          <SettingItem icon="information-outline" label="Sobre o Projeto" onPress={() => {}} />
+        <Section title={t('general_section')}>
+          <SettingItem icon="earth" label={t('language')} onPress={() => router.push('/Idioma')} />
+          <SettingItem icon="information-outline" label={t('about')} onPress={() => router.push('/Sobre')} />
         </Section>
 
-        <TouchableOpacity 
-          style={styles.logoutButton} 
-          onPress={() => Alert.alert("Sair", "Deseja encerrar a sessão?")}
-        >
-          <Text style={styles.logoutButtonText}>Encerrar Sessão</Text>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>{t('logout')}</Text>
         </TouchableOpacity>
 
         <Text style={styles.footerText}>v1.0.2 • Desenvolvido pela Equipe</Text>
@@ -85,87 +98,64 @@ export default function ConfigScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF', // Fundo branco puro
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  header: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingHorizontal: 24, 
+    paddingVertical: 20 
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 20,
+  headerTitle: { 
+    fontSize: 17, 
+    fontWeight: '600', 
+    color: '#000', 
+    fontFamily: GlobalStyles.fontFamily 
   },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    letterSpacing: -0.4,
-    color: '#000',
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
+  scrollContent: { paddingHorizontal: 24, paddingBottom: 40 },
+  section: { marginBottom: 32 },
+  sectionTitle: { 
+    fontSize: 12, 
+    fontWeight: '700', 
+    color: '#a0a0a0', 
+    textTransform: 'uppercase', 
+    marginBottom: 16, 
+    marginLeft: 4, 
+    fontFamily: GlobalStyles.fontFamily 
   },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
+  card: { backgroundColor: '#fbfbfb', borderRadius: 20, paddingVertical: 8 },
+  item: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingVertical: 16, 
+    paddingHorizontal: 20 
   },
-  section: {
-    marginBottom: 32,
+  leftContent: { flexDirection: 'row', alignItems: 'center' },
+  label: { 
+    fontSize: 15, 
+    marginLeft: 14, 
+    color: '#2d3436', 
+    fontFamily: GlobalStyles.fontFamily 
   },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#a0a0a0',
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginBottom: 16,
-    marginLeft: 4,
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
+  logoutButton: { 
+    marginTop: 10, 
+    backgroundColor: '#fff1f0', 
+    paddingVertical: 16, 
+    borderRadius: 20, 
+    alignItems: 'center' 
   },
-  card: {
-    backgroundColor: '#fbfbfb', 
-    borderRadius: 20,
-    paddingVertical: 8,
+  logoutButtonText: { 
+    color: '#ff3b30', 
+    fontWeight: '600', 
+    fontSize: 15, 
+    fontFamily: GlobalStyles.fontFamily 
   },
-  item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-  },
-  leftContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: '400',
-    marginLeft: 14,
-    color: '#2d3436',
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
-  },
-  logoutButton: {
-    marginTop: 10,
-    backgroundColor: '#fff1f0',
-    paddingVertical: 16,
-    borderRadius: 20,
-    alignItems: 'center',
-  },
-  logoutButtonText: {
-    color: '#ff3b30',
-    fontWeight: '600',
-    fontSize: 15,
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
-  },
-  logoutText: {
-    color: '#ff3b30',
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
-  },
-  footerText: {
-    textAlign: 'center',
-    color: '#d1d1d6',
-    fontSize: 11,
-    marginTop: 32,
-    letterSpacing: 0.5,
-    fontFamily: GlobalStyles.fontFamily, // Aplicado
-  },
+  footerText: { 
+    textAlign: 'center', 
+    color: '#d1d1d6', 
+    fontSize: 11, 
+    marginTop: 32, 
+    fontFamily: GlobalStyles.fontFamily 
+  }
 });

@@ -1,10 +1,12 @@
 // rotas do app, definidas aqui no layout para serem usadas em todas as telas
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+// Importamos o Provider que criamos (certifique-se de criar o arquivo LanguageContext.tsx)
+import { LanguageProvider } from './LanguageContext'; 
 
 export default function RootLayout() {
   return (
-    <>
+    <LanguageProvider>
       {/* Garante que os ícones de bateria/hora fiquem escuros no fundo branco */}
       <StatusBar style="dark" />
       
@@ -29,7 +31,9 @@ export default function RootLayout() {
         <Stack.Screen name="Cadastrar" />
         <Stack.Screen name="Analise" />
         <Stack.Screen name="Usuario" />
+        <Stack.Screen name="Perfil" />
+        <Stack.Screen name="Idioma" />
       </Stack>
-    </>
+    </LanguageProvider>
   );
 }

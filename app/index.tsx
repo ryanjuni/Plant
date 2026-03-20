@@ -8,20 +8,10 @@ import * as THREE from 'three';
 import { MaterialCommunityIcons } from '@expo/vector-icons'; 
 
 import { GlobalStyles } from './theme'; 
+import { useLanguage } from './LanguageContext'; 
 import { buscarDadosTrefle, atualizarClimaAgro } from '../Api/services'; 
 
 const modelPath = require('../assets/watermelon_bush.glb');
-
-const tradutorClima: { [key: string]: string } = {
-  "clear sky": "Sol Pleno",
-  "few clouds": "Sol Parcial",
-  "scattered clouds": "Nublado",
-  "broken clouds": "Encoberto",
-  "shower rain": "Chuva Leve",
-  "rain": "Chuva",
-  "thunderstorm": "Tempestade",
-  "mist": "Neblina"
-};
 
 function ModeloPlanta({ setPronto }: { setPronto: (val: boolean) => void }) {
   const { scene } = useGLTF(modelPath) as any;
@@ -52,20 +42,21 @@ function ModeloPlanta({ setPronto }: { setPronto: (val: boolean) => void }) {
 
 export default function IndexScreen() {
   const router = useRouter();
+  const { t } = useLanguage(); 
   const [carregado, setCarregado] = useState(false);
   const isMounted = useRef(true);
 
   const [dadosCultivo, setDadosCultivo] = useState({
     temperatura: "--",
     umidadeAr: "--",
-    riscoSeca: "Baixo",
-    luzSolar: "Boa",
-    dica: "Sincronizando dados..."
+    riscoSecaKey: "low", 
+    luzSolarKey: "excellent",
+    dicaKey: "syncing" 
   });
 
   const [extraInfo, setExtraInfo] = useState({
-    statusCeu: "Buscando...",
-    especie: "MELANCIA"
+    statusCeuKey: "searching",
+    nomeCientifico: ""
   });
 
   useEffect(() => {
@@ -80,37 +71,34 @@ export default function IndexScreen() {
         const nuvens = clima.clouds.all;
         const vento = clima.wind.speed;
 
-        let luz = "Excelente";
-        if (nuvens > 50) luz = "Moderada";
-        if (nuvens > 80) luz = "Baixa";
+        let luz = "excellent";
+        if (nuvens > 50) luz = "moderate";
+        if (nuvens > 80) luz = "low_light";
 
-        let seca = "Baixo";
-        if (temp > 28 && umid < 50) seca = "ALTO";
-        else if (temp > 22 || vento > 5) seca = "Médio";
+        let seca = "low";
+        if (temp > 28 && umid < 50) seca = "high";
+        else if (temp > 22 || vento > 5) seca = "medium";
 
-        let recomendacao = "Planta em condições ideais.";
-        if (seca === "ALTO") recomendacao = "Solo secando rápido! Regue agora.";
-        else if (umid > 85) recomendacao = "Muita umidade. Cuidado com fungos.";
-        else if (temp < 15) recomendacao = "Frio detectado. Proteja a muda.";
+        let dica = "ideal_cond";
+        if (seca === "high") dica = "water_now";
+        else if (umid > 85) dica = "high_humidity";
+        else if (temp < 15) dica = "cold_alert";
 
         setDadosCultivo({
           temperatura: temp.toString(),
           umidadeAr: umid.toString(),
-          riscoSeca: seca,
-          luzSolar: luz,
-          dica: recomendacao
+          riscoSecaKey: seca,
+          luzSolarKey: luz,
+          dicaKey: dica
         });
 
-        const descIngles = clima.weather[0].description.toLowerCase();
-        setExtraInfo(prev => ({ 
-          ...prev, 
-          statusCeu: tradutorClima[descIngles] || descIngles 
-        }));
+        const descChave = clima.weather[0].description.toLowerCase().replace(/\s+/g, "_");
+        setExtraInfo(prev => ({ ...prev, statusCeuKey: descChave }));
       }
 
       const planta = await buscarDadosTrefle('watermelon');
       if (planta && isMounted.current) {
-        setExtraInfo(prev => ({ ...prev, especie: `MELANCIA (${planta.scientific_name})` }));
+        setExtraInfo(prev => ({ ...prev, nomeCientifico: planta.scientific_name }));
       }
     };
 
@@ -124,11 +112,13 @@ export default function IndexScreen() {
       <View style={styles.appFrame}>
         
         <View style={styles.header}>
-          <Text style={styles.span}>{extraInfo.especie.toUpperCase()}</Text>
-          <Text style={styles.h1}>Meu Cultivo</Text>
+          <Text style={styles.span}>
+            {t('watermelon_name').toUpperCase()} {extraInfo.nomeCientifico ? `(${extraInfo.nomeCientifico})` : ''}
+          </Text>
+          <Text style={styles.h1}>{t('my_cultivation')}</Text>
           <View style={styles.dicaContainer}>
             <MaterialCommunityIcons name="lightbulb-on" size={14} color="#6ab04c" />
-            <Text style={styles.dicaText}>{dadosCultivo.dica}</Text>
+            <Text style={styles.dicaText}>{t(dadosCultivo.dicaKey)}</Text>
           </View>
         </View>
 
@@ -153,45 +143,43 @@ export default function IndexScreen() {
         <View style={styles.statsGrid}>
           <View style={[styles.card, { backgroundColor: '#fff9eb' }]}>
             <MaterialCommunityIcons name="thermometer" size={18} color="#ffa502" />
-            <Text style={styles.label}>CALOR AMBIENTE</Text>
+            <Text style={styles.label}>{t('temp_env')}</Text>
             <Text style={styles.value}>{dadosCultivo.temperatura}°C</Text>
           </View>
 
           <View style={[styles.card, { backgroundColor: '#f0f7ff' }]}>
             <MaterialCommunityIcons name="white-balance-sunny" size={18} color="#1e90ff" />
-            <Text style={styles.label}>LUZ SOLAR</Text>
-            <Text style={styles.value}>{dadosCultivo.luzSolar}</Text>
+            <Text style={styles.label}>{t('solar_light')}</Text>
+            {/* CORREÇÃO: Chamando t() para traduzir moderate/excellent */}
+            <Text style={styles.value}>{t(dadosCultivo.luzSolarKey)}</Text>
           </View>
 
           <View style={[styles.card, { backgroundColor: '#f2fcf2' }]}>
             <MaterialCommunityIcons name="water-percent" size={18} color="#2ed573" />
-            <Text style={styles.label}>UMIDADE AR</Text>
+            <Text style={styles.label}>{t('air_humidity')}</Text>
             <Text style={styles.value}>{dadosCultivo.umidadeAr}%</Text>
           </View>
 
           <View style={[styles.card, { backgroundColor: '#fef1f1' }]}>
             <MaterialCommunityIcons name="alert-circle-outline" size={18} color="#ff4757" />
-            <Text style={styles.label}>RISCO DE SECA</Text>
-            <Text style={[styles.value, {color: dadosCultivo.riscoSeca === 'ALTO' ? '#ff4757' : '#2d3436'}]}>
-              {dadosCultivo.riscoSeca}
+            <Text style={styles.label}>{t('drought_risk')}</Text>
+            {/* CORREÇÃO: Chamando t() para traduzir low/medium/high */}
+            <Text style={[styles.value, {color: dadosCultivo.riscoSecaKey === 'high' ? '#ff4757' : '#2d3436'}]}>
+              {t(dadosCultivo.riscoSecaKey)}
             </Text>
           </View>
         </View>
 
-        {/* MENU COM NAVEGAÇÃO REATIVADA */}
         <View style={styles.menu}>
           <TouchableOpacity style={styles.menuItem} onPress={() => router.replace('/')}>
-             <MaterialCommunityIcons name="home-variant" size={26} color="#000" />
+             <MaterialCommunityIcons name="home-variant" size={26} color="#2D6A4F" />
           </TouchableOpacity>
-          
           <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/Analise')}>
              <MaterialCommunityIcons name="chart-timeline-variant" size={26} color="#a0a0a0" />
           </TouchableOpacity>
-          
           <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/Relatorio')}>
              <MaterialCommunityIcons name="file-document-outline" size={26} color="#a0a0a0" />
           </TouchableOpacity>
-          
           <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/Config')}>
              <MaterialCommunityIcons name="cog-outline" size={26} color="#a0a0a0" />
           </TouchableOpacity>
