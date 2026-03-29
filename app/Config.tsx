@@ -6,7 +6,6 @@ import {
   TouchableOpacity, 
   SafeAreaView, 
   ScrollView, 
-  Alert,
   StatusBar
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -14,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { GlobalStyles } from './theme'; 
 import { useLanguage } from './LanguageContext'; // Importando o contexto global
 
-const SettingItem = ({ icon, label, onPress, isLogout }: any) => (
+const SettingItem = ({ icon, label, onPress }: any) => (
   <TouchableOpacity 
     activeOpacity={0.5}
     style={styles.item} 
@@ -24,9 +23,9 @@ const SettingItem = ({ icon, label, onPress, isLogout }: any) => (
       <MaterialCommunityIcons 
         name={icon} 
         size={22} 
-        color={isLogout ? "#ff3b30" : "#2d3436"} 
+        color="#2d3436" 
       />
-      <Text style={[styles.label, isLogout && { color: '#ff3b30' }]}>{label}</Text>
+      <Text style={styles.label}>{label}</Text>
     </View>
     <MaterialCommunityIcons name="chevron-right" size={18} color="#d1d1d6" />
   </TouchableOpacity>
@@ -42,17 +41,6 @@ const Section = ({ children, title }: any) => (
 export default function ConfigScreen() {
   const router = useRouter();
   const { t } = useLanguage(); // Função de tradução global
-
-  const handleLogout = () => {
-    Alert.alert(
-      t('logout'), 
-      "Deseja encerrar a sessão?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Sair", style: "destructive", onPress: () => router.replace('/Login') }
-      ]
-    );
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -72,24 +60,20 @@ export default function ConfigScreen() {
           <SettingItem 
             icon="account-outline" 
             label={t('profile_user')} 
-            onPress={() => router.push('/Perfil')} 
+            onPress={() => router.push('/Perfil' as any)} 
           />
         </Section>
 
         <Section title={t('horta_section')}>
-          <SettingItem icon="bell-outline" label={t('notifications')} onPress={() => router.push('/Alertas')} />
-          <SettingItem icon="cube-outline" label="Cadastro de plantas" onPress={() => router.push('/Cadastrar')} />
-          <SettingItem icon="database-outline" label={t('sensor_data')} onPress={() => router.push('/DadosSensor')} />
+          <SettingItem icon="bell-outline" label={t('notifications')} onPress={() => router.push('/Alertas' as any)} />
+          <SettingItem icon="cube-outline" label="Cadastro de plantas" onPress={() => router.push('/Cadastrar' as any)} />
+          <SettingItem icon="database-outline" label={t('sensor_data')} onPress={() => router.push('/DadosSensor' as any)} />
         </Section>
 
         <Section title={t('general_section')}>
-          <SettingItem icon="earth" label={t('language')} onPress={() => router.push('/Idioma')} />
-          <SettingItem icon="information-outline" label={t('about')} onPress={() => router.push('/Sobre')} />
+          <SettingItem icon="earth" label={t('language')} onPress={() => router.push('/Idioma' as any)} />
+          <SettingItem icon="information-outline" label={t('about')} onPress={() => router.push('/Sobre' as any)} />
         </Section>
-
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>{t('logout')}</Text>
-        </TouchableOpacity>
 
         <Text style={styles.footerText}>v1.0.2 • Desenvolvido pela Equipe</Text>
       </ScrollView>
@@ -136,19 +120,6 @@ const styles = StyleSheet.create({
     fontSize: 15, 
     marginLeft: 14, 
     color: '#2d3436', 
-    fontFamily: GlobalStyles.fontFamily 
-  },
-  logoutButton: { 
-    marginTop: 10, 
-    backgroundColor: '#fff1f0', 
-    paddingVertical: 16, 
-    borderRadius: 20, 
-    alignItems: 'center' 
-  },
-  logoutButtonText: { 
-    color: '#ff3b30', 
-    fontWeight: '600', 
-    fontSize: 15, 
     fontFamily: GlobalStyles.fontFamily 
   },
   footerText: { 
